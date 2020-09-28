@@ -11,9 +11,9 @@ script:
   if [[ "$TRAVIS_BRANCH" == "master" ]]; then
     sbt 'set isSnapshot := false' 'set version := IO.read(new File("VERSION")).mkString.trim' test +publishSigned
   elif [[ "$TRAVIS_BRANCH" == "develop" ]]; then
-    sbt -no-colors test +publishSigned -- -oF
+    sbt -no-colors test +publishSigned
   else
-    sbt -no-colors test -- -oF
+    sbt -no-colors test
   fi
 
 # Don't build version tags
