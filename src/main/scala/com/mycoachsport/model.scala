@@ -14,16 +14,22 @@ import io.nats.client.Connection
 
 final case class NatsMessage(content: String)
 
-final case class NatsSettings(connection: Connection,
-                              topics: Set[NatsSubscription])
+final case class NatsSettings(
+                               connection: Connection,
+                               topics: Set[NatsSubscription]
+                             )
 
 object NatsSettings {
-  def apply(connection: Connection,
-            subscription: NatsSubscription): NatsSettings =
+  def apply(
+             connection: Connection,
+             subscription: NatsSubscription
+           ): NatsSettings =
     NatsSettings(connection, Set(subscription))
 }
 
-sealed trait NatsSubscription
+sealed trait NatsSubscription {
+  def subject: String
+}
 
 case class SubjectSubscription(subject: String) extends NatsSubscription
 

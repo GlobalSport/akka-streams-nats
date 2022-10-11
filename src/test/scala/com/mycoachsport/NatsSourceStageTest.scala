@@ -10,9 +10,6 @@
 
 package com.mycoachsport
 
-import java.util.UUID
-import java.util.concurrent.TimeoutException
-
 import akka.actor.ActorSystem
 import akka.pattern
 import akka.stream.ActorMaterializer
@@ -23,6 +20,9 @@ import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 
+import java.util.UUID
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -79,7 +79,7 @@ class NatsSourceStageTest
       NatsSource(NatsSettings(connection, subjectSubscription), 10).run
     }
 
-    "Throw when buffer overflows" in {
+    "Unsubscribe when buffer overflows and resubscribe when 10 percent of buffer is available" in {
       val subject = UUID.randomUUID().toString
       val natsConnection =
         Nats.connect(s"nats://localhost:${natsServer.getMappedPort(4222)}")
@@ -87,26 +87,39 @@ class NatsSourceStageTest
       val natsSettings =
         NatsSettings(natsConnection, SubjectSubscription(subject))
 
-      val future = NatsSource(natsSettings, 10)
+      val handledMessages = new AtomicInteger()
+
+      val future = NatsSource(natsSettings, 20)
         .mapAsync(1) { _ =>
-          pattern.after(1.seconds, using = system.scheduler)(
+          pattern.after(10.millis, using = system.scheduler) {
+            handledMessages.incrementAndGet()
             Future.successful()
-          )
+          }
         }
         .run
 
-      (1 until 100).foreach(
-        _ => natsConnection.publish(subject, "test".getBytes)
-      )
+
+      (1 to 40).foreach {
+        _ =>
+          Thread.sleep(1)
+          natsConnection
+            .publish(subject, "test".getBytes)
+      }
+
 
       try {
-        future.await(1.seconds)
+        future.await(3.seconds)
       } catch {
-        case r: RuntimeException =>
-          r.getMessage shouldBe "Reached maximum buffer size 10"
-        case e: Throwable =>
-          throw e
+        case _: TimeoutException =>
+        // Ignore timeout exceptions since the stream is an infinite stream awaiting for nats messages
       }
+
+      // We produce 20 messages in 20 ms
+      // Buffer is full at 10 ms.
+      // A task takes 10 ms to run.
+      // Buffer will be able to consume one more task between millisecond 10 and 20
+      // This his why we have this magic 11 number here
+      handledMessages.intValue() shouldBe 21
     }
 
     "Consume messages" in {

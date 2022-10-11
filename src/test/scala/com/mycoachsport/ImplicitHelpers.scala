@@ -14,8 +14,8 @@ import akka.Done
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 
-import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 object ImplicitHelpers {
 
