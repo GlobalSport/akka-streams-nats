@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 MyCoach SAS
+ * Copyright 2022 MyCoach SAS
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -14,16 +14,22 @@ import io.nats.client.Connection
 
 final case class NatsMessage(content: String)
 
-final case class NatsSettings(connection: Connection,
-                              topics: Set[NatsSubscription])
+final case class NatsSettings(
+                               connection: Connection,
+                               topics: Set[NatsSubscription]
+                             )
 
 object NatsSettings {
-  def apply(connection: Connection,
-            subscription: NatsSubscription): NatsSettings =
+  def apply(
+             connection: Connection,
+             subscription: NatsSubscription
+           ): NatsSettings =
     NatsSettings(connection, Set(subscription))
 }
 
-sealed trait NatsSubscription
+sealed trait NatsSubscription {
+  def subject: String
+}
 
 case class SubjectSubscription(subject: String) extends NatsSubscription
 

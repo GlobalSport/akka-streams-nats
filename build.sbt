@@ -4,9 +4,9 @@ organization := "com.mycoachsport"
 
 version := IO.read(new File("VERSION")).mkString.trim + "-SNAPSHOT"
 
-scalaVersion := "2.13.3"
+scalaVersion := "2.13.9"
 
-crossScalaVersions := Seq( "2.12.12", "2.13.3")
+crossScalaVersions := Seq( "2.12.17", "2.13.9")
 
 isSnapshot := true
 
@@ -65,6 +65,6 @@ libraryDependencies := Seq(
   "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion % Test,
   "org.scalatest" %% "scalatest" % "3.0.8" % Test,
   "org.scalamock" %% "scalamock" % "4.4.0" % Test,
-  "org.testcontainers" % "testcontainers" % "1.14.3" % Test,
+  "org.testcontainers" % "testcontainers" % "1.17.5" % Test,
   "io.nats" % "jnats" % "2.8.0"
 )

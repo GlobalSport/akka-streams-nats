@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 MyCoach SAS
+ * Copyright 2022 MyCoach SAS
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -10,19 +10,12 @@
 
 package com.mycoachsport
 
-import java.nio.charset.StandardCharsets
-
-import akka.stream.stage.{
-  AsyncCallback,
-  GraphStage,
-  GraphStageLogic,
-  OutHandler
-}
+import akka.stream.stage._
 import akka.stream.{Attributes, Outlet, SourceShape}
 import io.nats.client.{Connection, Dispatcher, Message}
 
+import java.nio.charset.StandardCharsets
 import scala.collection.mutable
-
 class NatsSourceStage(natsSettings: NatsSettings, messageBufferSize: Int)
     extends GraphStage[SourceShape[NatsMessage]] {
 
@@ -33,7 +26,7 @@ class NatsSourceStage(natsSettings: NatsSettings, messageBufferSize: Int)
   private val queue = mutable.Queue[NatsMessage]()
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
-    new GraphStageLogic(shape) {
+    new GraphStageLogic(shape) with StageLogging {
       val connection: Connection = natsSettings.connection
       val consumeMessage: AsyncCallback[Message] = getAsyncCallback(
         handleIncomingMessage
@@ -41,6 +34,8 @@ class NatsSourceStage(natsSettings: NatsSettings, messageBufferSize: Int)
 
       val d: Dispatcher =
         connection.createDispatcher(consumeMessage.invoke)
+
+      var subscriptionState: SubscriptionState = Stopped
 
       def handleIncomingMessage(message: Message): Unit = {
         val msg = NatsMessage(
@@ -50,36 +45,70 @@ class NatsSourceStage(natsSettings: NatsSettings, messageBufferSize: Int)
         if (isAvailable(out)) {
           push(out, msg)
         } else {
-          if (queue.size + 1 > messageBufferSize) {
-            failStage(
-              new RuntimeException(
-                s"Reached maximum buffer size $messageBufferSize"
+          if (queue.size + 2 > messageBufferSize) {
+            if (subscriptionState == Started) {
+              queue.enqueue(msg)
+              log.error(
+                s"Stopping nats subscription - buffer size is ${queue.size} / ${messageBufferSize}"
               )
-            )
+              subscriptionState =
+                unsubscribeFromAllTopics(d, natsSettings.topics)
+            }
           } else {
             queue.enqueue(msg)
           }
-
         }
       }
 
-      natsSettings.topics.foreach(s => subscribeToNats(d, s))
+      subscriptionState = subscribeToAllTopics(d, natsSettings.topics)
 
-      setHandler(out, new OutHandler {
-        override def onPull(): Unit = {
-          if (queue.nonEmpty) {
-            push(out, queue.dequeue())
+      setHandler(
+        out,
+        new OutHandler {
+          override def onPull(): Unit = {
+            if (queue.nonEmpty) {
+              push(out, queue.dequeue())
+              val numberOfSlotAvailable = messageBufferSize - queue.size
+              // We restart the subscription if the state is stopped
+              // And there is more thant 10% of the slots available in the buffer
+              if (
+                subscriptionState == Stopped && (numberOfSlotAvailable >= messageBufferSize * 0.10)
+              ) {
+                log.info(
+                  s"Restarting nats subscription - buffer size is ${queue.size} / ${messageBufferSize}"
+                )
+                subscriptionState = subscribeToAllTopics(d, natsSettings.topics)
+              }
+            }
           }
         }
-      })
+      )
     }
 
-  def subscribeToNats(dispatcher: Dispatcher,
-                      natsSubscription: NatsSubscription): Unit = {
+  def subscribeToAllTopics(
+                            dispatcher: Dispatcher,
+                            natsSubscriptions: Set[NatsSubscription]
+                          ): SubscriptionState = {
+    natsSubscriptions.foreach(s => subscribeToTopic(dispatcher, s))
+    Started
+  }
+
+  def subscribeToTopic(
+                        dispatcher: Dispatcher,
+                        natsSubscription: NatsSubscription
+                      ): Unit = {
     natsSubscription match {
       case SubjectSubscription(subject) => dispatcher.subscribe(subject)
       case QueueGroupSubscription(subject, group) =>
         dispatcher.subscribe(subject, group)
     }
+  }
+
+  def unsubscribeFromAllTopics(
+                                dispatcher: Dispatcher,
+                                natsSubscriptions: Set[NatsSubscription]
+                              ): SubscriptionState = {
+    natsSubscriptions.foreach(s => dispatcher.unsubscribe(s.subject))
+    Stopped
   }
 }
