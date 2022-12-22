@@ -57,7 +57,7 @@ pomExtra := (<url>https://github.com/GlobalSport/akka-streams-nats</url>
 pgpPublicRing := file("public.key")
 pgpSecretRing := file("private.key")
 
-val AkkaVersion = "2.5.31"
+val AkkaVersion = "2.6.20"
 
 libraryDependencies := Seq(
   "com.typesafe.akka" %% "akka-stream" % AkkaVersion,
