@@ -24,6 +24,7 @@ import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import scala.collection.mutable
 import scala.concurrent.Await
 
@@ -93,7 +94,7 @@ class JetStreamSourceStageTest
       JetStreamSource(consumerContext)
         .map { m =>
           receivedMessages.add(new String(m.getData, StandardCharsets.UTF_8))
-          m.ack()
+          m.ackSync(Duration.ofMillis(100))
         }
         .take(expectedMessages.size)
         .run(),
@@ -148,7 +149,7 @@ class JetStreamSourceStageTest
       JetStreamSource(consumerContext)
         .map { m =>
           receivedMessages.add(new String(m.getData, StandardCharsets.UTF_8))
-          m.ack()
+          m.ackSync(Duration.ofMillis(100))
         }
         .take(2)
         .run(),
