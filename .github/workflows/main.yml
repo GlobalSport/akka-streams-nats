@@ -28,13 +28,12 @@ jobs:
           key: global-sbt-cache
       - name: Setup GPG
         run: |
-          echo "$PUBLIC_GPG_KEY" > public.key
           echo "$PRIVATE_GPG_KEY" > private.key
           echo "$OSS_NEXUS_CREDENTIALS" > nexus.credentials
           echo "PGP_PASS=$GPG_OPENSOURCE_PASS" >> "$GITHUB_ENV"
+          gpg --pinentry-mode loopback --passphrase $GPG_OPENSOURCE_PASS --import private.key
         shell: bash
         env:
-          PUBLIC_GPG_KEY: ${{secrets.OSS_PUBLIC_GPG_KEY}}
           PRIVATE_GPG_KEY: ${{secrets.OSS_PRIVATE_GPG_KEY}}
           OSS_NEXUS_CREDENTIALS: ${{secrets.OSS_NEXUS_CREDENTIALS}}
           GPG_OPENSOURCE_PASS: ${{secrets.OSS_PGP_PASS}}

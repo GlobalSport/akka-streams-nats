@@ -55,8 +55,6 @@ pomExtra := (<url>https://github.com/GlobalSport/akka-streams-nats</url>
   </developers>)
 
 usePgpKeyHex("C0497FF51F47AF0FC87E101E68FD896E410C21EF")
-pgpPublicRing := file("public.key")
-pgpSecretRing := file("private.key")
 pgpPassphrase := sys.env.get("PGP_PASS").map(_.toArray)
 
 val AkkaVersion = "2.6.20"
