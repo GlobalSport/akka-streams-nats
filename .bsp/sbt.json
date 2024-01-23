@@ -1,1 +1,0 @@
-{"name":"sbt","version":"1.9.8","bspVersion":"2.1.0-M1","languages":["scala"],"argv":["/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/bin/java","-Xms100m","-Xmx100m","-classpath","/Users/clem/Library/Application Support/JetBrains/IntelliJIdea2022.3/plugins/Scala/launcher/sbt-launch.jar","-Dsbt.script=/Users/clem/userbin/sbt/bin/sbt","xsbt.boot.Boot","-bsp"]}

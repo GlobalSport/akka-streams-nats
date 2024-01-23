@@ -5,3 +5,4 @@ secrets/
 nexus.credentials
 private.key
 public.key
+.bsp/
