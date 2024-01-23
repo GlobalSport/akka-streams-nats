@@ -4,9 +4,9 @@ organization := "com.mycoachsport"
 
 version := IO.read(new File("VERSION")).mkString.trim + "-SNAPSHOT"
 
-scalaVersion := "2.13.9"
+scalaVersion := "2.13.12"
 
-crossScalaVersions := Seq( "2.12.17", "2.13.9")
+crossScalaVersions := Seq( "2.12.18", "2.13.9")
 
 isSnapshot := true
 
