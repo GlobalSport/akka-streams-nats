@@ -66,5 +66,5 @@ libraryDependencies := Seq(
   "org.scalatest" %% "scalatest" % "3.0.8" % Test,
   "org.scalamock" %% "scalamock" % "4.4.0" % Test,
   "org.testcontainers" % "testcontainers" % "1.17.5" % Test,
-  "io.nats" % "jnats" % "2.8.0"
+  "io.nats" % "jnats" % "2.17.0"
 )

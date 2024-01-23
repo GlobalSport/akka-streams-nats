@@ -8,17 +8,32 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package com.mycoachsport;
+package com.mycoachsport
 
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
+import akka.stream.stage._
+import akka.stream.{Attributes, Outlet, SourceShape}
+import io.nats.client.{Connection, ConsumerContext, Dispatcher, Message}
 
-public class NatsContainer {
+import java.nio.charset.StandardCharsets
+import scala.collection.mutable
 
-    public static GenericContainer<?> create() {
-        return new GenericContainer<>("nats:2.10")
-                .withExposedPorts(4222)
-                .withCommand("--jetstream")
-                .waitingFor(new LogMessageWaitStrategy().withRegEx(".*Listening for client connections on.*"));
+class JetStreamSourceStage(consumerContext: ConsumerContext)
+    extends GraphStage[SourceShape[Message]] {
+
+  val out: Outlet[Message] = Outlet[Message]("JetstreamSource.out")
+
+  override def shape: SourceShape[Message] = SourceShape.of(out)
+
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+    new GraphStageLogic(shape) with StageLogging {
+      setHandler(
+        out,
+        new OutHandler {
+          override def onPull(): Unit = {
+            val message = consumerContext.next()
+            push(out, message)
+          }
+        }
+      )
     }
 }

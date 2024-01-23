@@ -15,15 +15,15 @@ import io.nats.client.Connection
 final case class NatsMessage(content: String)
 
 final case class NatsSettings(
-                               connection: Connection,
-                               topics: Set[NatsSubscription]
-                             )
+    connection: Connection,
+    topics: Set[NatsSubscription]
+)
 
 object NatsSettings {
   def apply(
-             connection: Connection,
-             subscription: NatsSubscription
-           ): NatsSettings =
+      connection: Connection,
+      subscription: NatsSubscription
+  ): NatsSettings =
     NatsSettings(connection, Set(subscription))
 }
 

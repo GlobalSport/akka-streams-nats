@@ -86,17 +86,17 @@ class NatsSourceStage(natsSettings: NatsSettings, messageBufferSize: Int)
     }
 
   def subscribeToAllTopics(
-                            dispatcher: Dispatcher,
-                            natsSubscriptions: Set[NatsSubscription]
-                          ): SubscriptionState = {
+      dispatcher: Dispatcher,
+      natsSubscriptions: Set[NatsSubscription]
+  ): SubscriptionState = {
     natsSubscriptions.foreach(s => subscribeToTopic(dispatcher, s))
     Started
   }
 
   def subscribeToTopic(
-                        dispatcher: Dispatcher,
-                        natsSubscription: NatsSubscription
-                      ): Unit = {
+      dispatcher: Dispatcher,
+      natsSubscription: NatsSubscription
+  ): Unit = {
     natsSubscription match {
       case SubjectSubscription(subject) => dispatcher.subscribe(subject)
       case QueueGroupSubscription(subject, group) =>
@@ -105,9 +105,9 @@ class NatsSourceStage(natsSettings: NatsSettings, messageBufferSize: Int)
   }
 
   def unsubscribeFromAllTopics(
-                                dispatcher: Dispatcher,
-                                natsSubscriptions: Set[NatsSubscription]
-                              ): SubscriptionState = {
+      dispatcher: Dispatcher,
+      natsSubscriptions: Set[NatsSubscription]
+  ): SubscriptionState = {
     natsSubscriptions.foreach(s => dispatcher.unsubscribe(s.subject))
     Stopped
   }
