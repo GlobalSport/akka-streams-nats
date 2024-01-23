@@ -108,8 +108,8 @@ class JetStreamSourceStageTest
     val jsm = natsConnection.jetStreamManagement()
     val sc = StreamConfiguration
       .builder()
-      .name("EVENTS")
-      .subjects("events.>")
+      .name("EVENTS-2")
+      .subjects("events2.>")
       .retentionPolicy(RetentionPolicy.WorkQueue)
       .build();
 
@@ -121,24 +121,24 @@ class JetStreamSourceStageTest
 
     expectedMessages.foreach { em =>
       js.publish(
-        "events.test",
+        "events2.test",
         em.getBytes(StandardCharsets.UTF_8)
       )
     }
 
     val c1 = ConsumerConfiguration
       .builder()
-      .durable("processor")
+      .durable("processor-2")
       .ackPolicy(AckPolicy.Explicit)
       .build()
 
-    jsm.addOrUpdateConsumer("EVENTS", c1)
+    jsm.addOrUpdateConsumer("EVENTS-2", c1)
 
-    val streamContext = natsConnection.getStreamContext("EVENTS")
-    val consumerContext = streamContext.getConsumerContext("processor")
+    val streamContext = natsConnection.getStreamContext("EVENTS-2")
+    val consumerContext = streamContext.getConsumerContext("processor-2")
 
     jsm
-      .getStreamInfo("EVENTS")
+      .getStreamInfo("EVENTS-2")
       .getStreamState
       .getMsgCount shouldBe expectedMessages.size
 
@@ -156,7 +156,7 @@ class JetStreamSourceStageTest
     )
 
     jsm
-      .getStreamInfo("EVENTS")
+      .getStreamInfo("EVENTS-2")
       .getStreamState
       .getMsgCount shouldBe expectedMessages.size - 2
     receivedMessages shouldBe expectedMessages.take(2).toSet

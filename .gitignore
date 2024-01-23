@@ -2,3 +2,6 @@
 target/
 *.iml
 secrets/
+nexus.credentials
+private.key
+public.key
