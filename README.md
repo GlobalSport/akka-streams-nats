@@ -20,7 +20,7 @@ libraryDependencies += "com.mycoachsport" %% "akka-streams-nats" % "0.0.1"
 <dependency>
     <groupId>com.mycoachsport</groupId>
     <artifactId>akka-streams-nats_2.12</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.4</version>
 </dependency>
 ```
 
@@ -29,37 +29,75 @@ libraryDependencies += "com.mycoachsport" %% "akka-streams-nats" % "0.0.1"
 <dependency>
     <groupId>com.mycoachsport</groupId>
     <artifactId>akka-streams-nats_2.13</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.4</version>
 </dependency>
 ```
 
 # Samples
+## Nats sample
 ```scala
 
 val natsConnection =
         Nats.connect("nats://localhost:4222")
 
-    // Create source with a subject
-      val natsSettings =
-        NatsSettings(natsConnection, SubjectSubscription("my.subject"))
+// Create source with a subject
+  val natsSettings =
+    NatsSettings(natsConnection, SubjectSubscription("my.subject"))
 
-      NatsSource(natsSettings, 10)
-        .map { message =>
-          // Do some work
-          println(message)
-        }
-        .run()
+  NatsSource(natsSettings, 10)
+    .map { message =>
+      // Do some work
+      println(message)
+    }
+    .run()
 
-    // Create a queue group based source
-      val natsSettingsQueue =
-        NatsSettings(natsConnection, QueueGroupSubscription("my.subject", "my.queue.group"))
+// Create a queue group based source
+  val natsSettingsQueue =
+    NatsSettings(natsConnection, QueueGroupSubscription("my.subject", "my.queue.group"))
 
-      NatsSource(natsSettingsQueue, 10)
-        .map { message =>
-          // Do some work
-          println(message)
-        }
-        .run()
+  NatsSource(natsSettingsQueue, 10)
+    .map { message =>
+      // Do some work
+      println(message)
+    }
+    .run()
+```
+
+## JetStream sample
+```scala
+
+val natsConnection =
+        Nats.connect("nats://localhost:4222")
+
+val jsm = natsConnection.jetStreamManagement()
+val sc = StreamConfiguration
+  .builder()
+  .name("EVENTS")
+  .subjects("events.>")
+  .retentionPolicy(RetentionPolicy.WorkQueue)
+  .build()
+
+jsm.addStream(sc)
+
+val js = natsConnection.jetStream()
+
+val c1 = ConsumerConfiguration
+  .builder()
+  .durable("processor")
+  .ackPolicy(AckPolicy.Explicit)
+  .build()
+
+jsm.addOrUpdateConsumer("EVENTS", c1)
+
+val streamContext = natsConnection.getStreamContext("EVENTS")
+val consumerContext = streamContext.getConsumerContext("processor")
+
+  JetStreamSource(consumerContext)
+    .map { m =>
+      // do some work
+      m.ack()
+    }
+    .run()
 ```
 
 ## LICENSE

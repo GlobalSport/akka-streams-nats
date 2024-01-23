@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 MyCoach SAS
+ * Copyright 2024 MYCOACH PRO SAS
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -15,7 +15,7 @@ import akka.pattern
 import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
 import com.mycoachsport.ImplicitHelpers._
-import io.nats.client.{Connection, Dispatcher, Nats}
+import io.nats.client.{Connection, Dispatcher, MessageHandler, Nats}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
@@ -98,14 +98,11 @@ class NatsSourceStageTest
         }
         .run
 
-
-      (1 to 40).foreach {
-        _ =>
-          Thread.sleep(1)
-          natsConnection
-            .publish(subject, "test".getBytes)
+      (1 to 40).foreach { _ =>
+        Thread.sleep(1)
+        natsConnection
+          .publish(subject, "test".getBytes)
       }
-
 
       try {
         future.await(3.seconds)
@@ -158,8 +155,10 @@ class NatsSourceStageTest
       .returns(dispatcher)
   }
 
-  private def mockSubscribeToQueueGroup(topicName: String,
-                                        queueGroup: String) = {
+  private def mockSubscribeToQueueGroup(
+      topicName: String,
+      queueGroup: String
+  ) = {
     (dispatcher
       .subscribe(_: String, _: String))
       .expects(topicName, queueGroup)
@@ -168,7 +167,7 @@ class NatsSourceStageTest
 
   private def mockCreateDispatcher = {
     (connection
-      .createDispatcher(_))
+      .createDispatcher(_: MessageHandler))
       .expects(*)
       .returns(dispatcher)
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 MyCoach SAS
+ * Copyright 2024 MYCOACH PRO SAS
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  *
@@ -86,17 +86,17 @@ class NatsSourceStage(natsSettings: NatsSettings, messageBufferSize: Int)
     }
 
   def subscribeToAllTopics(
-                            dispatcher: Dispatcher,
-                            natsSubscriptions: Set[NatsSubscription]
-                          ): SubscriptionState = {
+      dispatcher: Dispatcher,
+      natsSubscriptions: Set[NatsSubscription]
+  ): SubscriptionState = {
     natsSubscriptions.foreach(s => subscribeToTopic(dispatcher, s))
     Started
   }
 
   def subscribeToTopic(
-                        dispatcher: Dispatcher,
-                        natsSubscription: NatsSubscription
-                      ): Unit = {
+      dispatcher: Dispatcher,
+      natsSubscription: NatsSubscription
+  ): Unit = {
     natsSubscription match {
       case SubjectSubscription(subject) => dispatcher.subscribe(subject)
       case QueueGroupSubscription(subject, group) =>
@@ -105,9 +105,9 @@ class NatsSourceStage(natsSettings: NatsSettings, messageBufferSize: Int)
   }
 
   def unsubscribeFromAllTopics(
-                                dispatcher: Dispatcher,
-                                natsSubscriptions: Set[NatsSubscription]
-                              ): SubscriptionState = {
+      dispatcher: Dispatcher,
+      natsSubscriptions: Set[NatsSubscription]
+  ): SubscriptionState = {
     natsSubscriptions.foreach(s => dispatcher.unsubscribe(s.subject))
     Stopped
   }

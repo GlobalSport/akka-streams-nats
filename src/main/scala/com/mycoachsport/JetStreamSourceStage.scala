@@ -10,28 +10,27 @@
 
 package com.mycoachsport
 
-import io.nats.client.Connection
+import akka.stream.stage._
+import akka.stream.{Attributes, Outlet, SourceShape}
+import io.nats.client.{ConsumerContext, Message}
 
-final case class NatsMessage(content: String)
+class JetStreamSourceStage(consumerContext: ConsumerContext)
+    extends GraphStage[SourceShape[Message]] {
 
-final case class NatsSettings(
-    connection: Connection,
-    topics: Set[NatsSubscription]
-)
+  val out: Outlet[Message] = Outlet[Message]("JetstreamSource.out")
 
-object NatsSettings {
-  def apply(
-      connection: Connection,
-      subscription: NatsSubscription
-  ): NatsSettings =
-    NatsSettings(connection, Set(subscription))
+  override def shape: SourceShape[Message] = SourceShape.of(out)
+
+  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic =
+    new GraphStageLogic(shape) with StageLogging {
+      setHandler(
+        out,
+        new OutHandler {
+          override def onPull(): Unit = {
+            val message = consumerContext.next()
+            push(out, message)
+          }
+        }
+      )
+    }
 }
-
-sealed trait NatsSubscription {
-  def subject: String
-}
-
-case class SubjectSubscription(subject: String) extends NatsSubscription
-
-case class QueueGroupSubscription(subject: String, group: String)
-    extends NatsSubscription

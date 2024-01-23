@@ -4,9 +4,9 @@ organization := "com.mycoachsport"
 
 version := IO.read(new File("VERSION")).mkString.trim + "-SNAPSHOT"
 
-scalaVersion := "2.13.9"
+scalaVersion := "2.13.12"
 
-crossScalaVersions := Seq( "2.12.17", "2.13.9")
+crossScalaVersions := Seq("2.12.18", "2.13.9")
 
 isSnapshot := true
 
@@ -54,8 +54,10 @@ pomExtra := (<url>https://github.com/GlobalSport/akka-streams-nats</url>
     </developer>
   </developers>)
 
+usePgpKeyHex("C0497FF51F47AF0FC87E101E68FD896E410C21EF")
 pgpPublicRing := file("public.key")
 pgpSecretRing := file("private.key")
+pgpPassphrase := sys.env.get("PGP_PASS").map(_.toArray)
 
 val AkkaVersion = "2.6.20"
 
@@ -66,5 +68,5 @@ libraryDependencies := Seq(
   "org.scalatest" %% "scalatest" % "3.0.8" % Test,
   "org.scalamock" %% "scalamock" % "4.4.0" % Test,
   "org.testcontainers" % "testcontainers" % "1.17.5" % Test,
-  "io.nats" % "jnats" % "2.8.0"
+  "io.nats" % "jnats" % "2.17.0"
 )

@@ -7,31 +7,24 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 package com.mycoachsport
 
-import io.nats.client.Connection
+import akka.stream.scaladsl.Source
+import io.nats.client.ConsumerContext
 
-final case class NatsMessage(content: String)
+object JetStreamSource {
 
-final case class NatsSettings(
-    connection: Connection,
-    topics: Set[NatsSubscription]
-)
+  /** Create a new jetstream source from a consumer context.
+    *
+    * The source will get the next message onPull.
+    *
+    * You are responsible for managing Ack's and Nak's.
+    *
+    * @param consumerContext the consumer context to retrieve messages
+    * @return a Jetstrem source
+    */
+  def apply(consumerContext: ConsumerContext) = {
+    Source.fromGraph(new JetStreamSourceStage(consumerContext))
+  }
 
-object NatsSettings {
-  def apply(
-      connection: Connection,
-      subscription: NatsSubscription
-  ): NatsSettings =
-    NatsSettings(connection, Set(subscription))
 }
-
-sealed trait NatsSubscription {
-  def subject: String
-}
-
-case class SubjectSubscription(subject: String) extends NatsSubscription
-
-case class QueueGroupSubscription(subject: String, group: String)
-    extends NatsSubscription
