@@ -32,6 +32,7 @@ jobs:
           echo "$PRIVATE_GPG_KEY" > private.key
           echo "$OSS_NEXUS_CREDENTIALS" > nexus.credentials
           echo "PGP_PASS=$GPG_OPENSOURCE_PASS" >> "$GITHUB_ENV"
+          ls .
         shell: bash
         env:
           PUBLIC_GPG_KEY: ${{secrets.OSS_PUBLIC_GPG_KEY}}
