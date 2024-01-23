@@ -43,5 +43,5 @@ jobs:
         if: ${{github.ref_name != 'master'}}
         run: sbt test
       - name: Sbt deploy
-        if: ${{github.ref_name == 'master'}}
+#        if: ${{github.ref_name == 'master'}}
         run: sbt 'set isSnapshot := false' 'set version := IO.read(new File("VERSION")).mkString.trim' test +publishSigned
