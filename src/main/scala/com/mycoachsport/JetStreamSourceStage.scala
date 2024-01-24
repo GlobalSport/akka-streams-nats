@@ -14,8 +14,12 @@ import akka.stream.stage._
 import akka.stream.{Attributes, Outlet, SourceShape}
 import io.nats.client.{ConsumerContext, Message}
 
-class JetStreamSourceStage(consumerContext: ConsumerContext)
-    extends GraphStage[SourceShape[Message]] {
+import java.time.Duration
+
+class JetStreamSourceStage(
+    consumerContext: ConsumerContext,
+    pullMessageTimeout: java.time.Duration = Duration.ofSeconds(30)
+) extends GraphStage[SourceShape[Message]] {
 
   val out: Outlet[Message] = Outlet[Message]("JetstreamSource.out")
 
@@ -27,8 +31,14 @@ class JetStreamSourceStage(consumerContext: ConsumerContext)
         out,
         new OutHandler {
           override def onPull(): Unit = {
-            val message = consumerContext.next()
-            push(out, message)
+            val maybeMessage = Option(consumerContext.next(pullMessageTimeout))
+
+            maybeMessage match {
+              case Some(value) =>
+                push(out, value)
+              case None =>
+                ()
+            }
           }
         }
       )
