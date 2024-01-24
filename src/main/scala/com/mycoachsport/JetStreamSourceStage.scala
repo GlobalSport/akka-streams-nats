@@ -15,6 +15,7 @@ import akka.stream.{Attributes, Outlet, SourceShape}
 import io.nats.client.{ConsumerContext, Message}
 
 import java.time.Duration
+import scala.annotation.tailrec
 
 class JetStreamSourceStage(
     consumerContext: ConsumerContext,
@@ -31,13 +32,19 @@ class JetStreamSourceStage(
         out,
         new OutHandler {
           override def onPull(): Unit = {
+            val message = waitForMessage()
+            push(out, message)
+          }
+
+          @tailrec
+          def waitForMessage(): Message = {
             val maybeMessage = Option(consumerContext.next(pullMessageTimeout))
 
             maybeMessage match {
               case Some(value) =>
-                push(out, value)
+                value
               case None =>
-                ()
+                waitForMessage()
             }
           }
         }
