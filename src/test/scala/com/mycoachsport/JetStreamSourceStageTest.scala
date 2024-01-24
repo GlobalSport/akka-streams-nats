@@ -203,4 +203,53 @@ class JetStreamSourceStageTest
     result.toEither.swap.exists(_.isInstanceOf[TimeoutException]) shouldBe true
   }
 
+  "Properly wait for messages to be available" in {
+    val jsm = natsConnection.jetStreamManagement()
+    val sc = StreamConfiguration
+      .builder()
+      .name("EVENTS-4")
+      .subjects("events4.>")
+      .retentionPolicy(RetentionPolicy.WorkQueue)
+      .build();
+
+    jsm.addStream(sc)
+
+    val js = natsConnection.jetStream()
+
+    val c1 = ConsumerConfiguration
+      .builder()
+      .durable("processor-4")
+      .ackPolicy(AckPolicy.Explicit)
+      .build()
+
+    jsm.addOrUpdateConsumer("EVENTS-4", c1)
+
+    val streamContext = natsConnection.getStreamContext("EVENTS-4")
+    val consumerContext = streamContext.getConsumerContext("processor-4")
+
+    val expectedMessages = Set("foo", "bar")
+
+    val receivedMessages = mutable.Set[String]()
+
+    val runnable = JetStreamSource(consumerContext, Duration.ofMillis(1000))
+      .map { m =>
+        receivedMessages.add(new String(m.getData, StandardCharsets.UTF_8))
+        m.ackSync(Duration.ofMillis(100))
+      }
+      .take(2)
+      .run()
+
+    Thread.sleep(2000)
+    expectedMessages.foreach { em =>
+      js.publish(
+        "events4.test",
+        em.getBytes(StandardCharsets.UTF_8)
+      )
+    }
+
+    Await.result(runnable, 2.seconds)
+
+    receivedMessages shouldBe expectedMessages
+  }
+
 }

@@ -1,0 +1,1 @@
+sbt -mem 4096 'set isSnapshot := true' 'set version in ThisBuild := "9.9.9-SNAPSHOT"' clean +publishM2
