@@ -12,6 +12,8 @@ package com.mycoachsport
 import akka.stream.scaladsl.Source
 import io.nats.client.ConsumerContext
 
+import java.time.Duration
+
 object JetStreamSource {
 
   /** Create a new jetstream source from a consumer context.
@@ -23,8 +25,13 @@ object JetStreamSource {
     * @param consumerContext the consumer context to retrieve messages
     * @return a Jetstrem source
     */
-  def apply(consumerContext: ConsumerContext) = {
-    Source.fromGraph(new JetStreamSourceStage(consumerContext))
+  def apply(
+      consumerContext: ConsumerContext,
+      pullMessageTimeout: Duration = Duration.ofSeconds(30)
+  ) = {
+    Source.fromGraph(
+      new JetStreamSourceStage(consumerContext, pullMessageTimeout)
+    )
   }
 
 }

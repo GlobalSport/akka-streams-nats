@@ -26,7 +26,8 @@ import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
 import java.nio.charset.StandardCharsets
 import java.time.Duration
 import scala.collection.mutable
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future, TimeoutException}
+import scala.util.Try
 
 class JetStreamSourceStageTest
     extends TestKit(ActorSystem())
@@ -161,6 +162,45 @@ class JetStreamSourceStageTest
       .getStreamState
       .getMsgCount shouldBe expectedMessages.size - 2
     receivedMessages shouldBe expectedMessages.take(2).toSet
+  }
+
+  "Not throw when no elements are available" in {
+    val jsm = natsConnection.jetStreamManagement()
+    val sc = StreamConfiguration
+      .builder()
+      .name("EVENTS-3")
+      .subjects("events3.>")
+      .retentionPolicy(RetentionPolicy.WorkQueue)
+      .build();
+
+    jsm.addStream(sc)
+
+    val js = natsConnection.jetStream()
+
+    val c1 = ConsumerConfiguration
+      .builder()
+      .durable("processor-3")
+      .ackPolicy(AckPolicy.Explicit)
+      .build()
+
+    jsm.addOrUpdateConsumer("EVENTS-3", c1)
+
+    val streamContext = natsConnection.getStreamContext("EVENTS-3")
+    val consumerContext = streamContext.getConsumerContext("processor-3")
+
+    val result = Try(
+      Await.result(
+        JetStreamSource(consumerContext, Duration.ofMillis(1000))
+          .mapAsyncUnordered(1) { m =>
+            Future.successful(m.ackSync(Duration.ofMillis(100)))
+          }
+          .run(),
+        2.seconds
+      )
+    )
+
+    result.isFailure shouldBe true
+    result.toEither.swap.exists(_.isInstanceOf[TimeoutException]) shouldBe true
   }
 
 }
