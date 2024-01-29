@@ -16,6 +16,7 @@ import io.nats.client.{ConsumerContext, Message}
 
 import java.time.Duration
 import scala.annotation.tailrec
+import scala.util.{Failure, Success, Try}
 
 class JetStreamSourceStage(
     consumerContext: ConsumerContext,
@@ -38,13 +39,24 @@ class JetStreamSourceStage(
 
           @tailrec
           def waitForMessage(): Message = {
-            val maybeMessage = Option(consumerContext.next(pullMessageTimeout))
+            val maybeMessage = getMessage(3)
 
             maybeMessage match {
               case Some(value) =>
                 value
               case None =>
                 waitForMessage()
+            }
+          }
+
+          def getMessage(retries: Int): Option[Message] = {
+            Try(Option(consumerContext.next(pullMessageTimeout))) match {
+              case Failure(exception) if retries == 0 =>
+                throw exception
+              case Failure(_) =>
+                getMessage(retries - 1)
+              case Success(value) =>
+                value
             }
           }
         }

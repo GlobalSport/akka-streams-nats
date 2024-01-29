@@ -12,13 +12,14 @@ package com.mycoachsport
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
-import io.nats.client.Nats
+import io.nats.client.{ConsumerContext, Nats}
 import io.nats.client.api.{
   AckPolicy,
   ConsumerConfiguration,
   RetentionPolicy,
   StreamConfiguration
 }
+import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike}
@@ -27,12 +28,13 @@ import java.nio.charset.StandardCharsets
 import java.time.Duration
 import scala.collection.mutable
 import scala.concurrent.{Await, Future, TimeoutException}
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 class JetStreamSourceStageTest
     extends TestKit(ActorSystem())
     with WordSpecLike
-    with BeforeAndAfterAll {
+    with BeforeAndAfterAll
+    with MockFactory {
 
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
@@ -250,6 +252,29 @@ class JetStreamSourceStageTest
     Await.result(runnable, 2.seconds)
 
     receivedMessages shouldBe expectedMessages
+  }
+
+  "should retry on exception" in {
+    val consumerContext = mock[ConsumerContext]
+    val waitTime = Duration.ofMillis(10)
+
+    val exception = new RuntimeException("fail to pull")
+
+    (consumerContext
+      .next(_: java.time.Duration))
+      .expects(waitTime)
+      .throws(exception)
+      .repeated(4)
+
+    Try(
+      Await.result(
+        JetStreamSource(
+          consumerContext,
+          waitTime
+        ).run(),
+        1.second
+      )
+    ) shouldBe Failure(exception)
   }
 
 }
