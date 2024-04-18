@@ -39,7 +39,7 @@ class JetStreamSourceStage(
 
           @tailrec
           def waitForMessage(): Message = {
-            val maybeMessage = getMessage(3)
+            val maybeMessage = getMessage(0)
 
             maybeMessage match {
               case Some(value) =>
