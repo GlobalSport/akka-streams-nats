@@ -254,27 +254,27 @@ class JetStreamSourceStageV2Test
     receivedMessages shouldBe expectedMessages
   }
 
-//  "should retry on exception" in {
-//    val consumerContext = mock[ConsumerContext]
-//    val waitTime = Duration.ofMillis(10)
-//
-//    val exception = new RuntimeException("fail to pull")
-//
-//    (consumerContext
-//      .next(_: java.time.Duration))
-//      .expects(waitTime)
-//      .throws(exception)
-//      .repeated(4)
-//
-//    Try(
-//      Await.result(
-//        JetStreamSourceV2(
-//          consumerContext,
-//          waitTime
-//        ).run(),
-//        1.second
-//      )
-//    ) shouldBe Failure(exception)
-//  }
+  "should retry on exception" in {
+    val consumerContext = mock[ConsumerContext]
+    val waitTime = Duration.ofMillis(10)
+
+    val exception = new RuntimeException("fail to pull")
+
+    (consumerContext
+      .next(_: java.time.Duration))
+      .expects(waitTime)
+      .throws(exception)
+      .repeated(4)
+
+    Try(
+      Await.result(
+        JetStreamSourceV2(
+          consumerContext,
+          waitTime
+        ).run(),
+        3.seconds
+      )
+    ) shouldBe Failure(exception)
+  }
 
 }
