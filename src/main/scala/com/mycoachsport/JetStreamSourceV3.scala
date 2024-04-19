@@ -9,13 +9,12 @@
  */
 package com.mycoachsport
 
-import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
-import io.nats.client.{ConsumerContext, JetStreamSubscription}
+import io.nats.client.ConsumerContext
 
 import java.time.Duration
 
-object JetStreamSourceV2 {
+object JetStreamSourceV3 {
 
   /** Create a new jetstream source from a consumer context.
     *

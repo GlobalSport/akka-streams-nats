@@ -12,13 +12,8 @@ package com.mycoachsport
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
+import io.nats.client.api.{AckPolicy, ConsumerConfiguration, RetentionPolicy, StreamConfiguration}
 import io.nats.client.{ConsumerContext, Nats}
-import io.nats.client.api.{
-  AckPolicy,
-  ConsumerConfiguration,
-  RetentionPolicy,
-  StreamConfiguration
-}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
@@ -30,7 +25,7 @@ import scala.collection.mutable
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.util.{Failure, Try}
 
-class JetStreamSourceStageV2Test
+class JetStreamSourceStageV3Test
     extends TestKit(ActorSystem())
     with WordSpecLike
     with BeforeAndAfterAll

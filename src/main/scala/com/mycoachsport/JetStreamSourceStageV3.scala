@@ -1,14 +1,14 @@
 package com.mycoachsport
 
-import akka.actor.ActorSystem
 import akka.stream.stage._
 import akka.stream.{Attributes, Outlet, SourceShape}
 import io.nats.client.{ConsumerContext, Message}
-import java.time.Duration
-import scala.util.control.NonFatal
-import scala.concurrent.duration._
 
-class JetStreamSourceStageV2(
+import java.time.Duration
+import scala.concurrent.duration._
+import scala.util.control.NonFatal
+
+class JetStreamSourceStageV3(
     consumerContext: ConsumerContext,
     pullMessageTimeout: java.time.Duration = Duration.ofSeconds(30),
     maxRetries: Int = 3
