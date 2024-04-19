@@ -10,16 +10,15 @@
 package com.mycoachsport
 
 import akka.actor.ActorSystem
-import akka.stream.testkit.scaladsl.TestSink
-import akka.stream.{ActorAttributes, Attributes, Supervision}
+import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
+import io.nats.client.{ConsumerContext, Nats}
 import io.nats.client.api.{
   AckPolicy,
   ConsumerConfiguration,
   RetentionPolicy,
   StreamConfiguration
 }
-import io.nats.client.{ConsumerContext, Message, Nats}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
@@ -37,7 +36,7 @@ class JetStreamSourceStageV2Test
     with BeforeAndAfterAll
     with MockFactory {
 
-  implicit val ec = system.getDispatcher
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
 
   val natsServer = NatsContainer.create()
 
@@ -267,15 +266,13 @@ class JetStreamSourceStageV2Test
       .throws(exception)
       .repeated(4)
 
-    implicit val decider: Supervision.Decider = Supervision.stoppingDecider
-
     Try(
       Await.result(
         JetStreamSourceV2(
           consumerContext,
           waitTime
-        ).withAttributes(ActorAttributes.supervisionStrategy(decider)).run(),
-        10.seconds
+        ).run(),
+        3.seconds
       )
     ) shouldBe Failure(exception)
   }

@@ -9,11 +9,11 @@
  */
 package com.mycoachsport
 
+import akka.actor.ActorSystem
 import akka.stream.scaladsl.Source
-import io.nats.client.ConsumerContext
+import io.nats.client.{ConsumerContext, JetStreamSubscription}
 
 import java.time.Duration
-import scala.concurrent.ExecutionContext
 
 object JetStreamSourceV2 {
 
@@ -29,7 +29,7 @@ object JetStreamSourceV2 {
   def apply(
       consumerContext: ConsumerContext,
       pullMessageTimeout: java.time.Duration = Duration.ofSeconds(30)
-  )(implicit ec: ExecutionContext) = {
+  ) = {
     Source.fromGraph(
       new JetStreamSourceStageV2(consumerContext, pullMessageTimeout)
     )
