@@ -15,7 +15,7 @@ import io.nats.client.ConsumerContext
 import java.time.Duration
 import scala.concurrent.ExecutionContext
 
-object JetStreamSourceV2 {
+object JetStreamSourceV3 {
 
   /** Create a new jetstream source from a consumer context.
     *
@@ -31,7 +31,7 @@ object JetStreamSourceV2 {
       pullMessageTimeout: java.time.Duration = Duration.ofSeconds(30)
   )(implicit ec: ExecutionContext) = {
     Source.fromGraph(
-      new JetStreamSourceStageV2(consumerContext, pullMessageTimeout)
+      new JetStreamSourceStageV3(consumerContext, pullMessageTimeout)
     )
   }
 

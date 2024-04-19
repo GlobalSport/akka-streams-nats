@@ -19,6 +19,7 @@ import io.nats.client.api.{
   RetentionPolicy,
   StreamConfiguration
 }
+
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime

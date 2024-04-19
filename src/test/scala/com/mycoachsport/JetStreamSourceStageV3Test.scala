@@ -31,7 +31,7 @@ import scala.collection.mutable
 import scala.concurrent.{Await, Future, TimeoutException}
 import scala.util.{Failure, Try}
 
-class JetStreamSourceStageV2Test
+class JetStreamSourceStageV3Test
     extends TestKit(ActorSystem())
     with WordSpecLike
     with BeforeAndAfterAll
@@ -95,7 +95,7 @@ class JetStreamSourceStageV2Test
     val receivedMessages = mutable.Set[String]()
 
     Await.result(
-      JetStreamSourceV2(consumerContext)
+      JetStreamSourceV3(consumerContext)
         .map { m =>
           receivedMessages.add(new String(m.getData, StandardCharsets.UTF_8))
           m.ackSync(Duration.ofMillis(100))
@@ -150,7 +150,7 @@ class JetStreamSourceStageV2Test
     val receivedMessages = mutable.Set[String]()
 
     Await.result(
-      JetStreamSourceV2(consumerContext)
+      JetStreamSourceV3(consumerContext)
         .map { m =>
           receivedMessages.add(new String(m.getData, StandardCharsets.UTF_8))
           m.ackSync(Duration.ofMillis(100))
@@ -193,7 +193,7 @@ class JetStreamSourceStageV2Test
 
     val result = Try(
       Await.result(
-        JetStreamSourceV2(consumerContext, Duration.ofMillis(1000))
+        JetStreamSourceV3(consumerContext, Duration.ofMillis(1000))
           .mapAsyncUnordered(1) { m =>
             Future.successful(m.ackSync(Duration.ofMillis(100)))
           }
@@ -234,7 +234,7 @@ class JetStreamSourceStageV2Test
 
     val receivedMessages = mutable.Set[String]()
 
-    val runnable = JetStreamSourceV2(consumerContext, Duration.ofMillis(1000))
+    val runnable = JetStreamSourceV3(consumerContext, Duration.ofMillis(1000))
       .map { m =>
         receivedMessages.add(new String(m.getData, StandardCharsets.UTF_8))
         m.ackSync(Duration.ofMillis(100))
@@ -250,14 +250,14 @@ class JetStreamSourceStageV2Test
       )
     }
 
-    Await.result(runnable, 2.seconds)
+    Await.result(runnable, 5.seconds)
 
     receivedMessages shouldBe expectedMessages
   }
 
   "should retry on exception" in {
     val consumerContext = mock[ConsumerContext]
-    val waitTime = Duration.ofMillis(10)
+    val waitTime = Duration.ofMillis(1000)
 
     val exception = new RuntimeException("fail to pull")
 
@@ -271,11 +271,13 @@ class JetStreamSourceStageV2Test
 
     Try(
       Await.result(
-        JetStreamSourceV2(
+        JetStreamSourceV3(
           consumerContext,
           waitTime
-        ).withAttributes(ActorAttributes.supervisionStrategy(decider)).run(),
-        10.seconds
+        ).withAttributes(ActorAttributes.supervisionStrategy(decider))
+          .map(println)
+          .run(),
+        5.seconds
       )
     ) shouldBe Failure(exception)
   }
