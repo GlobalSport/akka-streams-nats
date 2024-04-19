@@ -7,7 +7,6 @@ import io.nats.client.{ConsumerContext, Message}
 import java.time.Duration
 import scala.concurrent.{ExecutionContext, Future, blocking}
 import scala.util.{Failure, Success}
-import helpers.FutureHelper
 
 import java.util.concurrent.atomic.{
   AtomicBoolean,
@@ -21,8 +20,7 @@ class JetStreamSourceStageV3(
     pullMessageTimeout: java.time.Duration = Duration.ofSeconds(30),
     maxRetries: Int = 3
 )(implicit executionContext: ExecutionContext)
-    extends GraphStage[SourceShape[Message]]
-    with FutureHelper {
+    extends GraphStage[SourceShape[Message]] {
 
   val out: Outlet[Message] = Outlet[Message]("JetstreamSource.out")
   override def shape: SourceShape[Message] = SourceShape(out)
@@ -35,7 +33,7 @@ class JetStreamSourceStageV3(
         new AtomicReference[Option[Message]](Option.empty)
       private val retryCount = new AtomicInteger(0)
       private val retryFetchKey = "retryFetch"
-      private var asyncCallInProgress = new AtomicBoolean(false)
+      private val asyncCallInProgress = new AtomicBoolean(false)
 
       private def fetchMessageAsync(): Unit = {
         log.debug("Trying to fetch a message")
