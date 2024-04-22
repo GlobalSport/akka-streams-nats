@@ -13,6 +13,7 @@ import akka.stream.scaladsl.Source
 import io.nats.client.ConsumerContext
 
 import java.time.Duration
+import scala.concurrent.ExecutionContext
 
 object JetStreamSource {
 
@@ -27,8 +28,8 @@ object JetStreamSource {
     */
   def apply(
       consumerContext: ConsumerContext,
-      pullMessageTimeout: Duration = Duration.ofSeconds(30)
-  ) = {
+      pullMessageTimeout: java.time.Duration = Duration.ofSeconds(30)
+  )(implicit ec: ExecutionContext) = {
     Source.fromGraph(
       new JetStreamSourceStage(consumerContext, pullMessageTimeout)
     )
