@@ -10,15 +10,10 @@
 package com.mycoachsport
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorAttributes, ActorMaterializer, Supervision}
 import akka.testkit.TestKit
 import io.nats.client.{ConsumerContext, Nats}
-import io.nats.client.api.{
-  AckPolicy,
-  ConsumerConfiguration,
-  RetentionPolicy,
-  StreamConfiguration
-}
+import io.nats.client.api.{AckPolicy, ConsumerConfiguration, RetentionPolicy, StreamConfiguration}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.Matchers._
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
@@ -52,6 +47,8 @@ class JetStreamSourceStageTest
 
   lazy val natsConnection =
     Nats.connect(s"nats://localhost:${natsServer.getMappedPort(4222)}")
+
+  implicit val ec = materializer.system.dispatcher
 
   "Test consuming all messages available" in {
     val jsm = natsConnection.jetStreamManagement()
@@ -256,7 +253,7 @@ class JetStreamSourceStageTest
 
   "should retry on exception" in {
     val consumerContext = mock[ConsumerContext]
-    val waitTime = Duration.ofMillis(10)
+    val waitTime = Duration.ofMillis(1000)
 
     val exception = new RuntimeException("fail to pull")
 
@@ -266,15 +263,18 @@ class JetStreamSourceStageTest
       .throws(exception)
       .repeated(4)
 
+    implicit val decider: Supervision.Decider = Supervision.stoppingDecider
+
     Try(
       Await.result(
         JetStreamSource(
           consumerContext,
           waitTime
-        ).run(),
-        1.second
+        ).withAttributes(ActorAttributes.supervisionStrategy(decider))
+          .map(println)
+          .run(),
+        5.seconds
       )
     ) shouldBe Failure(exception)
   }
-
 }
