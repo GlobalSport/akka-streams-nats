@@ -3,7 +3,8 @@ name: SBT CI
 on:
   push:
     branches:
-      - '*'
+      - 'develop'
+      - 'master'
       - '!v**'
   pull_request:
     branches:
