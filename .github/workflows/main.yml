@@ -27,6 +27,7 @@ jobs:
             ~/.sbt
             ~/.cache/coursier
           key: global-sbt-cache
+      - uses: sbt/setup-sbt@v1
       - name: Setup GPG
         run: |
           echo "$PRIVATE_GPG_KEY" > private.key
