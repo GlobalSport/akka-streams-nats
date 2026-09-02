@@ -15,11 +15,12 @@ publishMavenStyle := true
 publishArtifact in Test := false
 
 publishTo := {
-  val nexus = "https://oss.sonatype.org/"
   if (isSnapshot.value)
-    Some("snapshots" at nexus + "content/repositories/snapshots")
+    Some("snapshots" at "https://central.sonatype.com/repository/maven-snapshots/")
   else
-    Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    Some(
+      "releases" at "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2"
+    )
 }
 
 credentials += Credentials(
