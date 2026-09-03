@@ -31,17 +31,22 @@ jobs:
       - name: Setup GPG
         run: |
           echo "$PRIVATE_GPG_KEY" > private.key
-          echo "$OSS_NEXUS_CREDENTIALS" > nexus.credentials
           echo "PGP_PASS=$GPG_OPENSOURCE_PASS" >> "$GITHUB_ENV"
           gpg --pinentry-mode loopback --passphrase $GPG_OPENSOURCE_PASS --import private.key
         shell: bash
         env:
           PRIVATE_GPG_KEY: ${{secrets.OSS_PRIVATE_GPG_KEY}}
-          OSS_NEXUS_CREDENTIALS: ${{secrets.OSS_NEXUS_CREDENTIALS}}
           GPG_OPENSOURCE_PASS: ${{secrets.OSS_PGP_PASS}}
       - name: Sbt test
         if: ${{github.ref_name != 'master'}}
         run: sbt test
+      # Stages a signed bundle on Sonatype Central via the native sbt support
+      # (sonaUpload). Deliberately does NOT run sonaRelease - releasing to Maven
+      # Central still requires a human to review and publish the staged deployment
+      # at https://central.sonatype.com/publishing, same manual gate as before.
       - name: Sbt deploy
         if: ${{github.ref_name == 'master'}}
-        run: sbt 'set isSnapshot := false' 'set version := IO.read(new File("VERSION")).mkString.trim' test +publishSigned
+        run: sbt 'set isSnapshot := false' 'set version := IO.read(new File("VERSION")).mkString.trim' test +publishSigned sonaUpload
+        env:
+          SONATYPE_USERNAME: ${{secrets.SONATYPE_USERNAME}}
+          SONATYPE_PASSWORD: ${{secrets.SONATYPE_PASSWORD}}
