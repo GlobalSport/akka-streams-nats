@@ -14,17 +14,26 @@ publishMavenStyle := true
 
 publishArtifact in Test := false
 
+// Native sbt Sonatype Central support (sbt >= 1.11, requires >= 1.12.15 to be usable -
+// see project/build.properties). Replaces the old oss.sonatype.org Ivy resolver, which
+// can only send HTTP Basic auth - the OSSRH Staging API compatibility bridge that
+// replaced oss.sonatype.org requires a Bearer-scheme Authorization header instead,
+// which sbt's built-in Credentials/Ivy publish mechanism cannot produce.
 publishTo := {
+  val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
   if (isSnapshot.value)
-    Some("snapshots" at "https://central.sonatype.com/repository/maven-snapshots/")
+    Some("central-snapshots" at centralSnapshots)
   else
-    Some(
-      "releases" at "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2"
-    )
+    localStaging.value
 }
 
+description := "An Akka Streams source connecting to a nats.io server"
+
 credentials += Credentials(
-  file(s"${baseDirectory.value.getAbsolutePath}/nexus.credentials")
+  "Sonatype Nexus Repository Manager",
+  "central.sonatype.com",
+  sys.env.getOrElse("SONATYPE_USERNAME", ""),
+  sys.env.getOrElse("SONATYPE_PASSWORD", "")
 )
 
 credentials in GlobalScope += Credentials(
@@ -55,7 +64,7 @@ pomExtra := (<url>https://github.com/GlobalSport/akka-streams-nats</url>
     </developer>
   </developers>)
 
-usePgpKeyHex("C0497FF51F47AF0FC87E101E68FD896E410C21EF")
+usePgpKeyHex("06173C5A215C0905B5E8DAEDAE04AE010E5DD622")
 pgpPassphrase := sys.env.get("PGP_PASS").map(_.toArray)
 
 val AkkaVersion = "2.6.20"
