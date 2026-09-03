@@ -36,10 +36,6 @@ credentials += Credentials(
   sys.env.getOrElse("SONATYPE_PASSWORD", "")
 )
 
-credentials in GlobalScope += Credentials(
-  file(s"${baseDirectory.value.getAbsolutePath}/pgp.credentials")
-)
-
 pomIncludeRepository := { _ =>
   false
 }
